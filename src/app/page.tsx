@@ -1,95 +1,75 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
+import moment from "moment";
+import { getTopHeadlines } from "./scripts/client";
+
+const getTimeFromNow = (datestring: any) => {
+  // Parse the date string using moment
+  const targetTime = moment(datestring);
+
+  // Get the current time
+  const now = moment();
+
+  // Calculate the difference in hours
+  const hoursAgo = now.diff(targetTime, "hours");
+
+  return hoursAgo + " hours ago";
+};
 
 export default function Home() {
+  const [articles, setArticles] = useState(null) as any;
+  const [country, setCountry] = useState(null);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      const articleData = await getTopHeadlines("ca");
+      console.log("articleData: ", articleData);
+      articleData.articles.forEach((article: any) => {
+        if (article.urlToImage) {
+          const shortt = article.urlToImage;
+          article.backupImage = article.urlToImage.includes("cloudfront")
+            ? shortt
+            : shortt;
+        }
+      });
+      setArticles(articleData.articles);
+    };
+    fetchArticles();
+  }, []);
+
+  if (!articles) return <div>Loading...</div>;
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <main>
+      <header className={styles.banner}>
+        <h1>NEWS FEED</h1>
+      </header>
+      <ol className={styles.activityFeed}>
+        {articles
+          ? articles.map((article: any) => (
+              <li
+                className={styles.feedItem}
+                data-content="&#xf00c;"
+                data-time={getTimeFromNow(article.publishedAt)}
+                data-color="green"
+              >
+                <section>
+                  <label htmlFor="expand_1">
+                    <a href={article.url}>{article.author}</a>
+                  </label>
+                  <main className="content">
+                    <blockquote>
+                      <a href={article.url}>
+                        <b>{article.title}</b>
+                      </a>
+                    </blockquote>
+                  </main>
+                </section>
+              </li>
+            ))
+          : "no object returned "}
+      </ol>
     </main>
   );
 }
